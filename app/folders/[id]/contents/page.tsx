@@ -1,71 +1,53 @@
+// apps/web/app/folders/[id]/contents/page.tsx
 "use client";
-
 import { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/app/context/AuthContext";
+import { useRouter } from "next/router";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-interface Item {
-  id: string;
-  name: string;
-  type: "file" | "folder";
-}
-
-interface FolderContentsResponse {
-  items: Item[];
-}
-
-export default function FolderContentsPage({ params }: { params: { id: string } }) {
+export default function FolderContentsPage() {
   const { user } = useAuth();
-  const [items, setItems] = useState<Item[]>([]);
+  const router = useRouter();
+  const { id } = router.query;
+  const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-
-    const fetchFolderContents = async () => {
-      setLoading(true);
+    if (!user || !id) return;
+    const token = localStorage.getItem("token");
+    (async () => {
       try {
-        const token = localStorage.getItem("token");
-
-        const res = await fetch(`${API}/api/folders/${params.id}/contents`, {
-          headers: {
-            Authorization: `Bearer ${token || ""}`,
-          },
+        const res = await fetch(`${API}/api/folders/${id}/contents`, {
+          headers: { Authorization: `Bearer ${token || ""}` }
         });
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch folder contents: ${res.status}`);
-        }
-
-        const data: FolderContentsResponse = await res.json();
-        setItems(data.items || []);
+        const json = await res.json();
+        setItems(json.items || []);
       } catch (err) {
-        console.error("❌ Error fetching folder contents:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
-    };
+    })();
+  }, [user, id]);
 
-    fetchFolderContents();
-  }, [user, params.id]);
-
-  if (!user) return <div className="p-6">Redirecting to login.</div>;
-  if (loading) return <div className="p-6">Loading folder contents...</div>;
+  if (!user) return <div className="p-6">Redirecting.</div>;
+  if (loading) return <div className="p-6">Loading.</div>;
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Folder Contents</h1>
+      <h2 className="text-2xl font-semibold mb-4">Folder Contents</h2>
       {items.length === 0 ? (
-        <p>No items found in this folder.</p>
+        <div className="text-gray-500">No items found in folder</div>
       ) : (
-        <ul className="list-disc pl-6">
-          {items.map((item) => (
-            <li key={item.id}>
-              {item.type === "folder" ? "📁" : "📄"} {item.name}
-            </li>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {items.map(it => (
+            <div key={it.id} className="p-4 border rounded shadow">
+              <div className="font-medium">{it.name}</div>
+              <div className="text-xs text-gray-500">{it.type}</div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

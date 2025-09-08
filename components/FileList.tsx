@@ -1,75 +1,50 @@
+// apps/web/components/FileList.tsx
 "use client";
-
 import { useEffect, useState } from "react";
 
-interface FileItem {
-  id: string;
-  name: string;
-  url: string;
-}
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-const FileList = () => {
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
+type Props = {
+  ownerId: string;
+};
+
+export default function FileList({ ownerId }: Props) {
+  const [files, setFiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFiles = async () => {
+    if (!ownerId) return;
+    const token = localStorage.getItem("token");
+    (async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const token = localStorage.getItem("token");
-
-        console.log("🔒 Debug - API URL:", apiUrl);
-        console.log("🔒 Debug - Token exists:", !!token);
-
-        if (!token) {
-          setError("No token found. Please login again.");
-          return;
-        }
-
-        const res = await fetch(`${apiUrl}/api/files`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const res = await fetch(`${API}/api/files?ownerId=${ownerId}`, {
+          headers: { Authorization: `Bearer ${token || ""}` }
         });
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch files: ${res.status}`);
-        }
-
-        const data: { files: FileItem[] } = await res.json();
-        setFiles(data.files || []);
+        const json = await res.json();
+        setFiles(json.files || []);
       } catch (err) {
-        console.error("❌ Error fetching files:", err);
-        setError((err as Error).message);
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    };
+    })();
+  }, [ownerId]);
 
-    fetchFiles();
-  }, []);
-
-  if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
-  }
+  if (loading) return <div>Loading files...</div>;
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-2">Uploaded Files</h2>
-      <ul className="list-disc pl-6">
-        {files.map((file) => (
-          <li key={file.id}>
-            <a
-              href={file.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              {file.name}
-            </a>
-          </li>
-        ))}
-      </ul>
+      {files.length === 0 ? (
+        <div className="text-gray-500">No files uploaded</div>
+      ) : (
+        <ul>
+          {files.map((file: any) => (
+            <li key={file.id}>
+              {file.name} - {file.mime_type}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
-};
-
-export default FileList;
+}

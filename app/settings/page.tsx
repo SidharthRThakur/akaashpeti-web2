@@ -1,41 +1,40 @@
-// apps/web/app/settings/page.tsx
 "use client";
+import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
-import { useEffect, useState } from "react";
+interface SettingsData {
+  theme: string;
+  notificationsEnabled: boolean;
+}
 
 export default function SettingsPage() {
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<SettingsData | null>(null);
 
-  useEffect(() => {
-    async function fetchUser() {
-      const res = await fetch("http://localhost:8080/api/users/me", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      const data = await res.json();
-      if (res.ok) setUser(data.user);
-    }
-    fetchUser();
-  }, []);
-
-  const logout = () => {
-    localStorage.clear();
-    window.location.href = "/login";
+  const fetchSettings = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/settings`, {
+      headers: { Authorization: `Bearer ${token || ""}` },
+    });
+    const json: SettingsData = await res.json();
+    setSettings(json);
   };
 
+  if (!user) return <div className="p-6">Redirecting to login...</div>;
+
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6">
       <h1 className="text-2xl font-bold">Settings</h1>
-      {user ? (
-        <div className="space-y-2">
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>ID:</strong> {user.id}</p>
-        </div>
-      ) : (
-        <p>Loading profile…</p>
-      )}
-      <button onClick={logout} className="px-4 py-2 rounded bg-red-600 text-white">
-        Logout
+      <button onClick={fetchSettings} className="bg-blue-500 text-white p-2 rounded">
+        Load Settings
       </button>
+
+      {settings && (
+        <div className="mt-4">
+          <p>Theme: {settings.theme}</p>
+          <p>Notifications Enabled: {settings.notificationsEnabled ? "Yes" : "No"}</p>
+        </div>
+      )}
     </div>
   );
 }
