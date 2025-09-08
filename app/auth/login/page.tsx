@@ -10,14 +10,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await login(email, password);
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+  try {
+    await login(email, password);
+  } catch (err) {
+    if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError("An unexpected error occurred");
     }
   }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
