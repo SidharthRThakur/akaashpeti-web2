@@ -1,4 +1,3 @@
-// apps/web/app/dashboard/page.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,10 +6,21 @@ import ShareModal from "../../components/ShareModal";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+interface Folder {
+  id: string;
+  name: string;
+}
+
+interface File {
+  id: string;
+  name: string;
+  mime_type: string;
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [folders, setFolders] = useState<any[]>([]);
-  const [files, setFiles] = useState<any[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(true);
   const [newFolder, setNewFolder] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
@@ -18,14 +28,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return;
+
     async function fetchData() {
       setLoading(true);
       const token = localStorage.getItem("token");
       try {
-        const fRes = await fetch(`${API}/api/folders`, { headers: { Authorization: `Bearer ${token || ""}` }});
+        const fRes = await fetch(`${API}/api/folders`, { headers: { Authorization: `Bearer ${token || ""}` } });
         const foldersData = await fRes.json();
-        const filesRes = await fetch(`${API}/api/files`, { headers: { Authorization: `Bearer ${token || ""}` }});
+
+        const filesRes = await fetch(`${API}/api/files`, { headers: { Authorization: `Bearer ${token || ""}` } });
         const filesData = await filesRes.json();
+
         setFolders(foldersData.folders || []);
         setFiles(filesData.files || []);
       } catch (err) {
@@ -34,6 +47,7 @@ export default function DashboardPage() {
         setLoading(false);
       }
     }
+
     fetchData();
   }, [user]);
 
@@ -45,9 +59,9 @@ export default function DashboardPage() {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token || ""}` },
       body: JSON.stringify({ name: newFolder, parent_id: null }),
     });
+
     if (res.ok) {
       setNewFolder("");
-      // reload data
       window.location.reload();
     }
   }
@@ -109,4 +123,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
