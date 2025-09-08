@@ -18,8 +18,8 @@ const FileList = () => {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const token = localStorage.getItem("token");
 
-        console.log("🔎 Debug - API URL:", apiUrl);
-        console.log("🔎 Debug - Token exists:", !!token);
+        console.log("🔒 Debug - API URL:", apiUrl);
+        console.log("🔒 Debug - Token exists:", !!token);
 
         if (!token) {
           setError("No token found. Please login again.");
@@ -36,11 +36,11 @@ const FileList = () => {
           throw new Error(`Failed to fetch files: ${res.status}`);
         }
 
-        const data = await res.json();
-        setFiles(data);
-      } catch (err: any) {
+        const data: { files: FileItem[] } = await res.json();
+        setFiles(data.files || []);
+      } catch (err) {
         console.error("❌ Error fetching files:", err);
-        setError(err.message);
+        setError((err as Error).message);
       }
     };
 
