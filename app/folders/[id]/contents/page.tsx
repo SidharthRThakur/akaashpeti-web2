@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
