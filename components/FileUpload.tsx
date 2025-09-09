@@ -47,7 +47,7 @@ export default function FileUpload({ ownerId }: Props) {
         e.target.files && handleFiles(e.target.files)
       }
       disabled={isDisabled}
-      {...{ webkitdirectory: "true", directory: "true" }} // Custom directory attributes
+      {...{ webkitdirectory: "true", directory: "true" }} // Safe way to pass non-standard attributes
     />
   );
 }
