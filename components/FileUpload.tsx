@@ -16,38 +16,39 @@ export default function FileUpload({ ownerId }: Props) {
     setIsDisabled(true);
 
     const formData = new FormData();
-    Array.from(files).forEach((file) => {
-      formData.append("files", file);
-    });
+    Array.from(files).forEach((file) => formData.append("files", file));
 
     try {
       const token = localStorage.getItem("token");
-      await fetch(`${API}/api/files/upload`, {
+      const res = await fetch(`${API}/api/files/upload`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token || ""}`,
-        },
+        headers: { Authorization: `Bearer ${token ?? ""}` },
         body: formData,
       });
-      alert("Files uploaded successfully");
-    } catch (err) {
-      console.error(err);
-      alert("File upload failed");
+
+      if (res.ok) {
+        alert("Files uploaded successfully");
+      } else {
+        alert("Upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Upload error");
     } finally {
       setIsDisabled(false);
     }
   };
 
   return (
+    // @ts-ignore
     <input
       type="file"
       className="hidden"
       multiple
-      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-        e.target.files && handleFiles(e.target.files)
-      }
+      onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && handleFiles(e.target.files)}
       disabled={isDisabled}
-      {...{ webkitdirectory: "true", directory: "true" }} // Safe way to pass non-standard attributes
+      webkitdirectory="true"
+      directory="true"
     />
   );
 }
