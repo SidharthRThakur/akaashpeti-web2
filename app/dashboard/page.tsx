@@ -35,20 +35,18 @@ export default function DashboardPage() {
       const token = localStorage.getItem("token");
 
       try {
-        const foldersRes = await fetch(`${API}/api/folders`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const filesRes = await fetch(`${API}/api/files`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const [foldersRes, filesRes] = await Promise.all([
+          fetch(`${API}/api/folders`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API}/api/files`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
 
         const foldersData = await foldersRes.json();
         const filesData = await filesRes.json();
 
-        setFolders(foldersData.folders || []);
-        setFiles(filesData.files || []);
+        setFolders(foldersData.folders ?? []);
+        setFiles(filesData.files ?? []);
       } catch (error) {
-        console.error("Error fetching data", error);
+        console.error("Error fetching dashboard data", error);
       } finally {
         setLoading(false);
       }
@@ -71,62 +69,26 @@ export default function DashboardPage() {
     if (res.ok) {
       setNewFolder("");
       window.location.reload();
+    } else {
+      console.error("Failed to create folder");
     }
   };
 
-  if (!user) return <div className="p-6">Redirecting to login.</div>;
+  if (!user) return <div className="p-6">Redirecting to login...</div>;
   if (loading) return <div className="p-6">Loading...</div>;
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">My Drive</h2>
-        <div className="flex items-center space-x-3">
-          <input
-            type="text"
-            placeholder="New folder name"
-            value={newFolder}
-            onChange={(e) => setNewFolder(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <button onClick={createFolder} className="bg-green-600 text-white px-3 py-2 rounded">
-            Create
-          </button>
-        </div>
-      </div>
+      <h2 className="text-2xl font-semibold mb-4">My Drive</h2>
 
-      <section className="mb-8">
-        <h3 className="text-lg font-medium mb-3">Folders</h3>
-        {folders.length === 0 ? (
-          <div className="text-gray-500">No folders yet</div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {folders.map((f) => (
-              <div key={f.id} className="p-4 border rounded shadow relative text-center">
-                <Link href={`/folders/${f.id}/contents`} className="block">
-                  <div className="text-4xl">📁</div>
-                  <div className="mt-2 font-medium">{f.name}</div>
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <input type="text" value={newFolder} onChange={(e) => setNewFolder(e.target.value)} placeholder="New folder name" className="border p-2 rounded" />
+      <button onClick={createFolder} className="bg-green-600 text-white px-3 py-2 rounded ml-2">Create</button>
 
-      <section>
-        <h3 className="text-lg font-medium mb-3">Files</h3>
-        {files.length === 0 ? (
-          <div className="text-gray-500">No files yet</div>
-        ) : (
-          <ul>
-            {files.map((file) => (
-              <li key={file.id} className="mb-2">
-                {file.name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <h3 className="mt-6 font-medium">Folders</h3>
+      {folders.length === 0 ? <p>No folders yet</p> : folders.map((f) => <div key={f.id}>{f.name}</div>)}
+
+      <h3 className="mt-6 font-medium">Files</h3>
+      {files.length === 0 ? <p>No files yet</p> : files.map((file) => <div key={file.id}>{file.name}</div>)}
     </div>
   );
 }
