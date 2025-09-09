@@ -1,55 +1,59 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
 
-interface TrashItem {
-  id: string;
-  name: string;
-  deletedAt: string;
-}
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export default function TrashPage() {
-  const { user } = useAuth();
-  const [trashItems, setTrashItems] = useState<TrashItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [trashItems, setTrashItems] = useState<{ id: string; name: string }[]>([]);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+
+    if (token && userData) setUser(JSON.parse(userData));
+  }, []);
 
   useEffect(() => {
     if (!user) return;
 
-    const token = localStorage.getItem("token");
-    (async () => {
+    const fetchTrash = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trash`, {
-          headers: { Authorization: `Bearer ${token || ""}` },
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API}/api/trash`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch trash items: ${res.status}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTrashItems(data.trash ?? []);
+        } else {
+          console.error("Failed to fetch trash", await res.text());
+          setTrashItems([]);
         }
-
-        const json: { items: TrashItem[] } = await res.json();
-        setTrashItems(json.items);
       } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching trash", err);
+        setTrashItems([]);
       }
-    })();
+    };
+
+    fetchTrash();
   }, [user]);
 
-  if (!user) return <div className="p-6">Redirecting to login...</div>;
-  if (loading) return <div className="p-6">Loading trash items...</div>;
+  if (!user) return <div className="p-6">Redirecting to login.</div>;
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold">Trash Bin</h1>
-      <ul>
-        {trashItems.map((item) => (
-          <li key={item.id}>
-            {item.name} (Deleted at: {new Date(item.deletedAt).toLocaleString()})
-          </li>
-        ))}
-      </ul>
+      <h2 className="text-2xl font-semibold mb-4">Trash</h2>
+      {trashItems.length === 0 ? (
+        <p>No items in trash</p>
+      ) : (
+        <ul>
+          {trashItems.map((item) => (
+            <li key={item.id}>{item.name}</li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

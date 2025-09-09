@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useRef, useState, useEffect } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -10,6 +10,14 @@ interface Props {
 
 export default function FileUpload({ ownerId }: Props) {
   const [isDisabled, setIsDisabled] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute("webkitdirectory", "true");
+      fileInputRef.current.setAttribute("directory", "true");
+    }
+  }, []);
 
   const handleFiles = async (files: FileList) => {
     if (!files.length) return;
@@ -41,6 +49,7 @@ export default function FileUpload({ ownerId }: Props) {
 
   return (
     <input
+      ref={fileInputRef}
       type="file"
       className="hidden"
       multiple
@@ -48,8 +57,6 @@ export default function FileUpload({ ownerId }: Props) {
         e.target.files && handleFiles(e.target.files)
       }
       disabled={isDisabled}
-      // Apply custom attributes safely via 'inputProps' spreading
-      {...{ "webkitdirectory": "true", directory: "true" }}
     />
   );
 }
