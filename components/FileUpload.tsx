@@ -1,70 +1,53 @@
-// apps/web/components/FileUpload.tsx
 "use client";
+import { ChangeEvent, useState } from "react";
 
-import { useState } from "react";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-interface FileUploadProps {
-  onUpload?: () => void; // refresh callback
+interface Props {
+  ownerId: string;
 }
 
-export default function FileUpload({ onUpload }: FileUploadProps) {
-  const [uploading, setUploading] = useState(false);
+export default function FileUpload({ ownerId }: Props) {
+  const [isDisabled, setIsDisabled] = useState(false);
 
-  // ✅ handle files (single or multiple)
   const handleFiles = async (files: FileList) => {
-    setUploading(true);
+    if (!files.length) return;
+
+    setIsDisabled(true);
+
+    const formData = new FormData();
+    Array.from(files).forEach((file) => {
+      formData.append("files", file);
+    });
+
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const res = await fetch("http://localhost:8080/api/files", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: formData,
-        });
-
-        const data = await res.json();
-        console.log("Upload response:", data);
-      }
-
-      if (onUpload) onUpload();
+      const token = localStorage.getItem("token");
+      await fetch(`${API}/api/files/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: formData,
+      });
+      alert("Files uploaded successfully");
     } catch (err) {
-      console.error("Upload error:", err);
+      console.error(err);
+      alert("File upload failed");
     } finally {
-      setUploading(false);
+      setIsDisabled(false);
     }
   };
 
   return (
-    <div className="flex gap-3">
-      {/* ✅ File Upload */}
-      <label className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-        {uploading ? "Uploading..." : "Upload File"}
-        <input
-          type="file"
-          className="hidden"
-          onChange={(e) => e.target.files && handleFiles(e.target.files)}
-          disabled={uploading}
-        />
-      </label>
-
-      {/* ✅ Folder Upload */}
-      <label className="cursor-pointer bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-        {uploading ? "Uploading..." : "Upload Folder"}
-        <input
-          type="file"
-          className="hidden"
-          webkitdirectory="true"
-          directory="true"
-          multiple
-          onChange={(e) => e.target.files && handleFiles(e.target.files)}
-          disabled={uploading}
-        />
-      </label>
-    </div>
+    <input
+      type="file"
+      className="hidden"
+      multiple
+      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+        e.target.files && handleFiles(e.target.files)
+      }
+      disabled={isDisabled}
+      {...{ webkitdirectory: "true", directory: "true" }} // Custom directory attributes
+    />
   );
 }
