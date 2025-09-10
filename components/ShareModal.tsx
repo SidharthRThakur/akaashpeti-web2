@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 
 // Ensure API URL is defined at runtime
@@ -37,9 +38,9 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
         Authorization: `Bearer ${token || ""}`,
       },
       body: JSON.stringify({
-        file_id: itemId,    // Matches backend expected key
-        email: email,       // Matches backend expected key
-        access_level: role, // Matches backend expected key
+        file_id: itemId,    // Correct key as per backend
+        email: email,       // Correct key as per backend
+        access_level: role, // Correct key as per backend
       }),
     });
 
@@ -76,10 +77,18 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
         </select>
         {message && <div className="text-sm text-gray-600 mb-3">{message}</div>}
         <div className="flex justify-end space-x-2">
-          <button type="button" onClick={onClose} className="px-3 py-1 rounded bg-gray-200">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1 rounded bg-gray-200"
+          >
             Cancel
           </button>
-          <button type="button" onClick={handleShare} className="px-3 py-1 rounded bg-blue-600 text-white">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="px-3 py-1 rounded bg-blue-600 text-white"
+          >
             Share
           </button>
         </div>
