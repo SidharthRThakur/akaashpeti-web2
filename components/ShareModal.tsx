@@ -1,7 +1,14 @@
 "use client";
 import { useState } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+// Ensure API URL is defined at runtime
+const API = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API) {
+  throw new Error("NEXT_PUBLIC_API_URL is not defined in environment variables");
+}
+
+console.log("API URL:", API); // Debugging: Will print correct API URL at runtime
 
 type Props = {
   isOpen: boolean;
@@ -20,16 +27,22 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
       setMessage("Enter email");
       return;
     }
+
     const token = localStorage.getItem("token");
+
     const res = await fetch(`${API}/api/share`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token || ""}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token || ""}`,
+      },
       body: JSON.stringify({
-        file_id: itemId,       // Correct key as per backend
-        email: email,          // Correct key as per backend
-        access_level: role,    // Correct key as per backend
+        file_id: itemId,    // Matches backend expected key
+        email: email,       // Matches backend expected key
+        access_level: role, // Matches backend expected key
       }),
     });
+
     if (res.ok) {
       setMessage("Shared successfully");
       setEmail("");
@@ -41,6 +54,7 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
   }
 
   if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white w-96 p-6 rounded shadow">
