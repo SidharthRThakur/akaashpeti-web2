@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; type: "file" | "folder" } | null>(null);
+  const [recipientEmail, setRecipientEmail] = useState("");
 
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -87,6 +88,30 @@ export default function DashboardPage() {
   const openShare = (id: string, type: "file" | "folder") => {
     setSelectedItem({ id, type });
     setShareOpen(true);
+    setRecipientEmail("");
+  };
+
+  const handleShare = async () => {
+    if (!recipientEmail.trim() || !selectedItem) return;
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API}/api/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        item_id: selectedItem.id,
+        item_type: selectedItem.type,
+        recipient_email: recipientEmail,
+      }),
+    });
+
+    if (res.ok) {
+      alert("Shared successfully!");
+      setShareOpen(false);
+    } else {
+      alert("Failed to share. Please try again.");
+    }
   };
 
   if (!user) return <div className="p-6">Redirecting to login.</div>;
@@ -156,17 +181,33 @@ export default function DashboardPage() {
       </section>
 
       {shareOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded shadow">
-            <h3 className="text-lg font-medium mb-2">Share {selectedItem.type}</h3>
-            <p>ID: {selectedItem.id}</p>
-            <input type="email" placeholder="Enter recipient email" className="border p-2 rounded w-full mb-2" />
-            <button className="bg-blue-600 text-white px-3 py-2 rounded">
-              Share Now
-            </button>
-            <button onClick={() => setShareOpen(false)} className="mt-4 bg-gray-500 text-white px-3 py-2 rounded">
-              Close
-            </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow w-96">
+            <h3 className="text-xl font-semibold mb-4">Share file</h3>
+            <div className="mb-3">
+              <p>ID: {selectedItem.id}</p>
+            </div>
+            <input
+              type="email"
+              placeholder="Enter recipient email"
+              className="border p-2 rounded w-full mb-3"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+            />
+            <div className="flex space-x-4">
+              <button
+                onClick={handleShare}
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+              >
+                Share Now
+              </button>
+              <button
+                onClick={() => setShareOpen(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
