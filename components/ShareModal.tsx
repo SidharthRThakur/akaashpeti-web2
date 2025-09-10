@@ -25,10 +25,9 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token || ""}` },
       body: JSON.stringify({
-        item_type: itemType,
-        item_id: itemId,
-        shared_with: email,
-        role,
+        file_id: itemId,       // Correct key as per backend
+        email: email,          // Correct key as per backend
+        access_level: role,    // Correct key as per backend
       }),
     });
     if (res.ok) {
@@ -66,11 +65,7 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
           <button type="button" onClick={onClose} className="px-3 py-1 rounded bg-gray-200">
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={handleShare}
-            className="px-3 py-1 rounded bg-blue-600 text-white"
-          >
+          <button type="button" onClick={handleShare} className="px-3 py-1 rounded bg-blue-600 text-white">
             Share
           </button>
         </div>
