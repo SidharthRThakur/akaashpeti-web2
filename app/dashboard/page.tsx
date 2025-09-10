@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [newFolder, setNewFolder] = useState("");
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ email: string } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; type: "file" | "folder" } | null>(null);
 
@@ -26,15 +26,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    if (token && user) {
-      try {
-        setUser(JSON.parse(user));
-      } catch (err) {
-        console.error("Invalid user object in localStorage", err);
-      }
-    }
+    const email = localStorage.getItem("email");
+    if (token && email) setUser({ email });
   }, []);
 
   useEffect(() => {
@@ -104,7 +97,10 @@ export default function DashboardPage() {
             onChange={(e) => setNewFolder(e.target.value)}
             className="border p-2 rounded"
           />
-          <button onClick={createFolder} className="bg-green-600 text-white px-3 py-2 rounded">
+          <button
+            onClick={createFolder}
+            className="bg-green-600 text-white px-3 py-2 rounded"
+          >
             Create
           </button>
         </div>
