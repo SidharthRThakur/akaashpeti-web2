@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [newFolder, setNewFolder] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<{ email: string } | null>(null);
+  const [initialized, setInitialized] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; type: "file" | "folder" } | null>(null);
 
@@ -27,16 +28,16 @@ export default function DashboardPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const email = localStorage.getItem("email");
+
     if (token && email) {
       setUser({ email });
-    } else {
-      // Redirect explicitly to login page if not authenticated
-      window.location.href = "/auth/login";
     }
+
+    setInitialized(true); // Mark as initialized after checking localStorage
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!initialized || !user) return;
 
     const fetchData = async () => {
       setLoading(true);
@@ -63,7 +64,7 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [user]);
+  }, [user, initialized]);
 
   const createFolder = async () => {
     if (!newFolder.trim()) return;
@@ -86,6 +87,13 @@ export default function DashboardPage() {
     setSelectedItem({ id, type });
     setShareOpen(true);
   };
+
+  if (!initialized) return <div className="p-6">Loading...</div>;
+
+  if (!user) {
+    window.location.href = "/auth/login";
+    return null; // Prevents rendering anything else
+  }
 
   if (loading) return <div className="p-6">Loading...</div>;
 
