@@ -18,8 +18,7 @@ export default function DashboardPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [newFolder, setNewFolder] = useState("");
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<{ email: string } | null>(null);
-  const [initialized, setInitialized] = useState(false);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; type: "file" | "folder" } | null>(null);
 
@@ -27,17 +26,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const email = localStorage.getItem("email");
+    const user = localStorage.getItem("user");
 
-    if (token && email) {
-      setUser({ email });
+    if (token && user) {
+      try {
+        setUser(JSON.parse(user));
+      } catch (err) {
+        console.error("Invalid user object in localStorage", err);
+      }
     }
-
-    setInitialized(true); // Mark as initialized after checking localStorage
   }, []);
 
   useEffect(() => {
-    if (!initialized || !user) return;
+    if (!user) return;
 
     const fetchData = async () => {
       setLoading(true);
@@ -64,7 +65,7 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [user, initialized]);
+  }, [user]);
 
   const createFolder = async () => {
     if (!newFolder.trim()) return;
@@ -88,13 +89,7 @@ export default function DashboardPage() {
     setShareOpen(true);
   };
 
-  if (!initialized) return <div className="p-6">Loading...</div>;
-
-  if (!user) {
-    window.location.href = "/auth/login";
-    return null; // Prevents rendering anything else
-  }
-
+  if (!user) return <div className="p-6">Redirecting to login.</div>;
   if (loading) return <div className="p-6">Loading...</div>;
 
   return (
@@ -129,7 +124,7 @@ export default function DashboardPage() {
                 </Link>
                 <button
                   onClick={() => openShare(f.id, "folder")}
-                  className="absolute top-2 right-2 text-blue-600 underline cursor-pointer"
+                  className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-sm"
                 >
                   Share
                 </button>
@@ -148,30 +143,17 @@ export default function DashboardPage() {
             {files.map((file) => (
               <li key={file.id} className="mb-2">
                 {file.name}
-                <span
+                <button
                   onClick={() => openShare(file.id, "file")}
-                  className="ml-2 text-blue-600 underline cursor-pointer"
+                  className="ml-2 text-blue-600 underline"
                 >
                   Share
-                </span>
+                </button>
               </li>
             ))}
           </ul>
         )}
       </section>
-
-      {shareOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded shadow">
-            <h3 className="text-lg font-medium mb-2">Share {selectedItem.type}</h3>
-            <p>ID: {selectedItem.id}</p>
-            {/* Insert form fields to specify the user/email to share with */}
-            <button onClick={() => setShareOpen(false)} className="mt-4 bg-gray-500 text-white px-3 py-2 rounded">
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
