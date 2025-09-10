@@ -124,7 +124,7 @@ export default function DashboardPage() {
                 </Link>
                 <button
                   onClick={() => openShare(f.id, "folder")}
-                  className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-sm"
+                  className="absolute top-2 right-2 text-blue-600 underline cursor-pointer"
                 >
                   Share
                 </button>
@@ -145,7 +145,7 @@ export default function DashboardPage() {
                 {file.name}
                 <button
                   onClick={() => openShare(file.id, "file")}
-                  className="ml-2 text-blue-600 underline"
+                  className="ml-2 text-blue-600 underline cursor-pointer"
                 >
                   Share
                 </button>
@@ -154,6 +154,22 @@ export default function DashboardPage() {
           </ul>
         )}
       </section>
+
+      {shareOpen && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-4 rounded shadow">
+            <h3 className="text-lg font-medium mb-2">Share {selectedItem.type}</h3>
+            <p>ID: {selectedItem.id}</p>
+            <input type="email" placeholder="Enter recipient email" className="border p-2 rounded w-full mb-2" />
+            <button className="bg-blue-600 text-white px-3 py-2 rounded">
+              Share Now
+            </button>
+            <button onClick={() => setShareOpen(false)} className="mt-4 bg-gray-500 text-white px-3 py-2 rounded">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
