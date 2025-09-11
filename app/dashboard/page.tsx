@@ -214,8 +214,6 @@
 //     </div>
 //   );
 // }
-
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -240,7 +238,7 @@ export default function DashboardPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; type: "file" | "folder" } | null>(null);
   const [recipientEmail, setRecipientEmail] = useState("");
-  const [accessLevel, setAccessLevel] = useState<"viewer" | "editor">("viewer");
+  const [accessRole, setAccessRole] = useState<"viewer" | "editor">("viewer");
 
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -308,7 +306,7 @@ export default function DashboardPage() {
     setSelectedItem({ id, type });
     setShareOpen(true);
     setRecipientEmail("");
-    setAccessLevel("viewer"); // Default to viewer, can be changed in UI
+    setAccessRole("viewer"); // Reset role each time
   };
 
   const handleShare = async () => {
@@ -322,7 +320,7 @@ export default function DashboardPage() {
       body: JSON.stringify({
         file_id: selectedItem.id,
         email: recipientEmail,
-        access_level: accessLevel, // Pass dynamic role
+        access_level: accessRole, // Dynamically passed role
       }),
     });
 
@@ -331,8 +329,7 @@ export default function DashboardPage() {
       setShareOpen(false);
     } else {
       const j = await res.json().catch(() => ({}));
-      setRecipientEmail("");
-      setMessage(j?.error || "Share failed");
+      alert(j?.error || "Share failed");
     }
   };
 
@@ -417,21 +414,23 @@ export default function DashboardPage() {
               onChange={(e) => setRecipientEmail(e.target.value)}
             />
             <select
+              value={accessRole}
+              onChange={(e) => setAccessRole(e.target.value as "viewer" | "editor")}
               className="border p-2 rounded w-full mb-3"
-              value={accessLevel}
-              onChange={(e) => setAccessLevel(e.target.value as "viewer" | "editor")}
             >
               <option value="viewer">Viewer</option>
               <option value="editor">Editor</option>
             </select>
             <div className="flex space-x-4">
               <button
+                type="button"
                 onClick={handleShare}
                 className="bg-blue-600 text-white px-4 py-2 rounded"
               >
                 Share Now
               </button>
               <button
+                type="button"
                 onClick={() => setShareOpen(false)}
                 className="bg-gray-500 text-white px-4 py-2 rounded"
               >
