@@ -23,7 +23,7 @@ export default function SharedPage() {
 
         if (res.ok) {
           const data = await res.json();
-          setSharedItems(Array.isArray(data.shared) ? data.shared : []);
+          setSharedItems(Array.isArray(data.sharedItems) ? data.sharedItems : []);
         } else {
           console.error("Failed to fetch shared items", await res.text());
           setSharedItems([]);
