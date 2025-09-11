@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 
 interface SharedItem {
@@ -24,7 +23,7 @@ export default function SharedPage() {
 
         if (res.ok) {
           const data = await res.json();
-          setSharedItems(Array.isArray(data.sharedItems) ? data.sharedItems : []);
+          setSharedItems(Array.isArray(data.sharedItems) ? data.shared : []);
         } else {
           console.error("Failed to fetch shared items", await res.text());
           setSharedItems([]);
