@@ -100,9 +100,9 @@ export default function DashboardPage() {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        item_id: selectedItem.id,
-        item_type: selectedItem.type,
-        recipient_email: recipientEmail,
+      file_id: selectedItem.id,
+      email: recipientEmail,
+      access_level: "editor"
       }),
     });
 
