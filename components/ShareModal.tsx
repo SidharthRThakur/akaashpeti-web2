@@ -34,7 +34,7 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${API}/api/share`, {
+      const res = await fetch(`${API}/api/shared`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
