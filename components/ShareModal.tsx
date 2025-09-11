@@ -22,6 +22,7 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"viewer" | "editor">("viewer");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleShare() {
     if (!email) {
@@ -29,28 +30,35 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
       return;
     }
 
-    const token = localStorage.getItem("token");
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await fetch(`${API}/api/share`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token || ""}`,
-      },
-      body: JSON.stringify({
-        file_id: itemId,    // Correct key as per backend
-        email: email,       // Correct key as per backend
-        access_level: role, // Correct key as per backend
-      }),
-    });
+      const res = await fetch(`${API}/api/share`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({
+          file_id: itemId,
+          email: email,
+          access_level: role,
+        }),
+      });
 
-    if (res.ok) {
-      setMessage("Shared successfully");
-      setEmail("");
-      setRole("viewer");
-    } else {
-      const j = await res.json().catch(() => ({}));
-      setMessage(j?.error || "Share failed");
+      const result = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMessage(`Shared with ${email} as ${role}`);
+        setEmail("");
+        setRole("viewer");
+      } else {
+        setMessage(result?.error || "Share failed");
+      }
+    } catch (err) {
+      setMessage("Unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -72,8 +80,8 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
           onChange={(e) => setRole(e.target.value as "viewer" | "editor")}
           className="w-full p-2 border rounded mb-3"
         >
-          <option value="viewer">Viewer</option>
-          <option value="editor">Editor</option>
+          <option value="viewer">Viewer – Can only view the file</option>
+          <option value="editor">Editor – Can edit or manage the file</option>
         </select>
         {message && <div className="text-sm text-gray-600 mb-3">{message}</div>}
         <div className="flex justify-end space-x-2">
@@ -81,15 +89,19 @@ export default function ShareModal({ isOpen, onClose, itemId, itemType }: Props)
             type="button"
             onClick={onClose}
             className="px-3 py-1 rounded bg-gray-200"
+            disabled={loading}
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleShare}
-            className="px-3 py-1 rounded bg-blue-600 text-white"
+            disabled={loading}
+            className={`px-3 py-1 rounded text-white ${
+              loading ? "bg-gray-400" : "bg-blue-600"
+            }`}
           >
-            Share
+            {loading ? "Sharing..." : "Share"}
           </button>
         </div>
       </div>
