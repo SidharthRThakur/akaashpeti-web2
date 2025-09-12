@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
 interface SharedItem {
@@ -17,13 +18,14 @@ export default function SharedPage() {
     const fetchSharedItems = async () => {
       const token = localStorage.getItem("token");
       try {
-        const res = await fetch(`${API}/api/shared`, {
+        const res = await fetch(`${API}/api/share/shared`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.ok) {
           const data = await res.json();
-          setSharedItems(Array.isArray(data.sharedItems) ? data.shared : []);
+          // Ensure sharedItems is always an array
+          setSharedItems(Array.isArray(data.sharedItems) ? data.sharedItems : []);
         } else {
           console.error("Failed to fetch shared items", await res.text());
           setSharedItems([]);
@@ -44,7 +46,7 @@ export default function SharedPage() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold mb-4">Shared Items</h2>
-      {sharedItems.length === 0 ? (
+      {Array.isArray(sharedItems) && sharedItems.length === 0 ? (
         <div>No shared items available</div>
       ) : (
         <ul>
