@@ -4,14 +4,19 @@ import { useEffect, useState } from "react";
 
 interface SharedItem {
   id: string;
-  name: string;
-  type: "file" | "folder";
+  item_id: string;
+  item_type: "file" | "folder";
+  owner_id: string;
+  shared_with: string;
+  role: string;
+  created_at: string;
 }
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export default function SharedPage() {
-  const [sharedItems, setSharedItems] = useState<SharedItem[]>([]);
+  const [sharedWithMe, setSharedWithMe] = useState<SharedItem[]>([]);
+  const [sharedByMe, setSharedByMe] = useState<SharedItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,15 +29,17 @@ export default function SharedPage() {
 
         if (res.ok) {
           const data = await res.json();
-          // Ensure sharedItems is always an array
-          setSharedItems(Array.isArray(data.sharedItems) ? data.sharedItems : []);
+          setSharedWithMe(Array.isArray(data.sharedWithMe) ? data.sharedWithMe : []);
+          setSharedByMe(Array.isArray(data.sharedByMe) ? data.sharedByMe : []);
         } else {
           console.error("Failed to fetch shared items", await res.text());
-          setSharedItems([]);
+          setSharedWithMe([]);
+          setSharedByMe([]);
         }
       } catch (error) {
         console.error("Error fetching shared items:", error);
-        setSharedItems([]);
+        setSharedWithMe([]);
+        setSharedByMe([]);
       } finally {
         setLoading(false);
       }
@@ -45,14 +52,27 @@ export default function SharedPage() {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-4">Shared Items</h2>
-      {Array.isArray(sharedItems) && sharedItems.length === 0 ? (
-        <div>No shared items available</div>
+      <h2 className="text-2xl font-semibold mb-4">Shared With Me</h2>
+      {sharedWithMe.length === 0 ? (
+        <div>No items shared with you</div>
       ) : (
         <ul>
-          {sharedItems.map((item) => (
+          {sharedWithMe.map((item) => (
             <li key={item.id} className="mb-2">
-              {item.type === "folder" ? "📁" : "📄"} {item.name}
+              {item.item_type === "folder" ? "📁" : "📄"} ID: {item.item_id}, Role: {item.role}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 className="text-2xl font-semibold my-4">Shared By Me</h2>
+      {sharedByMe.length === 0 ? (
+        <div>You have not shared any items yet</div>
+      ) : (
+        <ul>
+          {sharedByMe.map((item) => (
+            <li key={item.id} className="mb-2">
+              {item.item_type === "folder" ? "📁" : "📄"} ID: {item.item_id}, Shared with: {item.shared_with}, Role: {item.role}
             </li>
           ))}
         </ul>
