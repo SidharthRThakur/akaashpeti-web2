@@ -1,6 +1,8 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -8,11 +10,15 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { login } = useAuth(); // ✅ use context
   const router = useRouter();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
+    setLoading(true);
 
     try {
       const res = await fetch(`${API}/api/auth/signup`, {
@@ -23,26 +29,27 @@ export default function SignupPage() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        // Save token and email to localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("email", email);
-
-        // Redirect to dashboard
-        router.push("/dashboard");
-      } else {
-        // Handle specific errors (e.g., duplicate email)
-        if (data.message.includes("duplicate key")) {
+      if (!res.ok) {
+        if (data.error?.includes("duplicate key")) {
           setErrorMessage("This email is already registered.");
         } else {
-          setErrorMessage(data.message || "Signup failed. Please try again.");
+          setErrorMessage(data.error || "Signup failed. Please try again.");
         }
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("An unexpected error occurred.");
+
+      // ✅ Use AuthContext login so state + localStorage update instantly
+      login(data.user.email, data.token);
+
+      // ✅ Redirect to dashboard
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      console.error("Signup error:", err);
+      setErrorMessage((err as Error).message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="p-6 max-w-md mx-auto">
@@ -71,8 +78,12 @@ export default function SignupPage() {
           <div className="text-red-500">{errorMessage}</div>
         )}
 
-        <button type="submit" className="w-full bg-green-600 text-white p-2 rounded">
-          Sign Up
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-green-600 text-white p-2 rounded"
+        >
+          {loading ? "Signing up..." : "Sign Up"}
         </button>
       </form>
 

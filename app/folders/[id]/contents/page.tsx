@@ -1,7 +1,7 @@
 // apps/web/app/folders/[id]/contents/page.tsx
 "use client";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/router";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";

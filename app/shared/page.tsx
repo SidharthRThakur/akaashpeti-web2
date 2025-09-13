@@ -1,82 +1,116 @@
+// apps/web/app/shared/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
 
 interface SharedItem {
   id: string;
-  item_id: string;
+  item_name: string;
   item_type: "file" | "folder";
-  owner_id: string;
-  shared_with: string;
   role: string;
-  created_at: string;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
 export default function SharedPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [sharedWithMe, setSharedWithMe] = useState<SharedItem[]>([]);
   const [sharedByMe, setSharedByMe] = useState<SharedItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSharedItems = async () => {
-      const token = localStorage.getItem("token");
-      try {
-        const res = await fetch(`${API}/api/share/shared`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-        if (res.ok) {
-          const data = await res.json();
-          setSharedWithMe(Array.isArray(data.sharedWithMe) ? data.sharedWithMe : []);
-          setSharedByMe(Array.isArray(data.sharedByMe) ? data.sharedByMe : []);
-        } else {
-          console.error("Failed to fetch shared items", await res.text());
-          setSharedWithMe([]);
-          setSharedByMe([]);
-        }
-      } catch (error) {
-        console.error("Error fetching shared items:", error);
-        setSharedWithMe([]);
-        setSharedByMe([]);
+  // ✅ redirect if not logged in
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchShared() {
+      try {
+        const token = localStorage.getItem("token");
+        const [withMeRes, byMeRes] = await Promise.all([
+          fetch(`${API}/api/share/shared-with-me`, {
+            headers: { Authorization: `Bearer ${token || ""}` },
+          }),
+          fetch(`${API}/api/share/shared-by-me`, {
+            headers: { Authorization: `Bearer ${token || ""}` },
+          }),
+        ]);
+
+        const withMeData = await withMeRes.json();
+        const byMeData = await byMeRes.json();
+
+        setSharedWithMe(withMeData.sharedWithMe || []);
+        setSharedByMe(byMeData.sharedByMe || []);
+      } catch (err) {
+        console.error("Failed to fetch shared items", err);
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchSharedItems();
-  }, []);
+    fetchShared();
+  }, [API, user]);
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (!user) return null;
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-4">Shared With Me</h2>
-      {sharedWithMe.length === 0 ? (
-        <div>No items shared with you</div>
-      ) : (
-        <ul>
-          {sharedWithMe.map((item) => (
-            <li key={item.id} className="mb-2">
-              {item.item_type === "folder" ? "📁" : "📄"} ID: {item.item_id}, Role: {item.role}
-            </li>
-          ))}
-        </ul>
-      )}
+    <main className="flex-1 p-6">
+      <h1 className="text-2xl font-bold mb-4">Shared</h1>
 
-      <h2 className="text-2xl font-semibold my-4">Shared By Me</h2>
-      {sharedByMe.length === 0 ? (
-        <div>You have not shared any items yet</div>
+      {loading ? (
+        <p>Loading shared items...</p>
       ) : (
-        <ul>
-          {sharedByMe.map((item) => (
-            <li key={item.id} className="mb-2">
-              {item.item_type === "folder" ? "📁" : "📄"} ID: {item.item_id}, Shared with: {item.shared_with}, Role: {item.role}
-            </li>
-          ))}
-        </ul>
+        <>
+          <section className="mb-6">
+            <h2 className="text-lg font-semibold mb-2">Shared With Me</h2>
+            {sharedWithMe.length === 0 ? (
+              <p className="text-gray-500">No items shared with you.</p>
+            ) : (
+              <ul className="space-y-2">
+                {sharedWithMe.map((item) => (
+                  <li
+                    key={item.id}
+                    className="p-3 border rounded flex justify-between items-center"
+                  >
+                    <span>
+                      {item.item_name} ({item.item_type}) —{" "}
+                      <span className="italic text-sm">{item.role}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold mb-2">Shared By Me</h2>
+            {sharedByMe.length === 0 ? (
+              <p className="text-gray-500">You haven’t shared any items yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {sharedByMe.map((item) => (
+                  <li
+                    key={item.id}
+                    className="p-3 border rounded flex justify-between items-center"
+                  >
+                    <span>
+                      {item.item_name} ({item.item_type}) —{" "}
+                      <span className="italic text-sm">{item.role}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
       )}
-    </div>
+    </main>
   );
 }

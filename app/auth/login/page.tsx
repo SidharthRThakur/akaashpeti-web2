@@ -1,43 +1,54 @@
 // apps/web/app/auth/login/page.tsx
 "use client";
+
 import { useState } from "react";
-import Link from "next/link";
-import { useAuth } from "../../../context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const router = useRouter();
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
-  try {
-    await login(email, password);
-  } catch (err) {
-    if (err instanceof Error) {
-      setError(err.message);
-    } else {
-      setError("An unexpected error occurred");
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Login failed");
+        return;
+      }
+
+      login(data.user.email, data.token); // update context + localStorage
+      router.replace("/dashboard");
+    } catch (err: any) {
+      alert(err?.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   }
-}
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="w-96 bg-white p-8 rounded shadow">
-        <h1 className="text-3xl font-bold text-blue-600 text-center mb-2">Akaash-Peti</h1>
-        <p className="text-center text-sm text-gray-500 mb-6">Login to your account</p>
+    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+      <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-96">
+        <h1 className="text-2xl font-bold mb-4">Login</h1>
 
-        {error && <div className="text-red-500 mb-3 text-sm">{error}</div>}
+        <input type="email" placeholder="Email" value={email} required onChange={(e) => setEmail(e.target.value)} className="w-full p-2 border rounded mb-3" />
+        <input type="password" placeholder="Password" value={password} required onChange={(e) => setPassword(e.target.value)} className="w-full p-2 border rounded mb-3" />
 
-        <input type="email" placeholder="Email" className="w-full p-2 border rounded mb-3" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input type="password" placeholder="Password" className="w-full p-2 border rounded mb-4" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">Login</button>
-
-        <p className="text-center text-sm mt-4 text-gray-600">
-          Don’t have an account? <Link href="/auth/signup" className="text-blue-600">Sign up</Link>
-        </p>
+        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
       </form>
     </div>
   );

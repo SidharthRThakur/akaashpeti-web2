@@ -1,5 +1,9 @@
+// apps/web/app/files/page.tsx
 "use client";
+
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
 
 interface File {
   id: string;
@@ -8,22 +12,28 @@ interface File {
 }
 
 export default function FilesPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+  // ✅ redirect if not logged in
   useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!user) return;
+
     const fetchFiles = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const token = localStorage.getItem("token");
-
-        if (!token) {
-          setError("No token found. Please login again.");
-          return;
-        }
-
-        const res = await fetch(`${apiUrl}/api/files`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await fetch(`${API}/api/files`, {
+          headers: { Authorization: `Bearer ${token || ""}` },
         });
 
         if (!res.ok) {
@@ -39,7 +49,9 @@ export default function FilesPage() {
     };
 
     fetchFiles();
-  }, []);
+  }, [API, user]);
+
+  if (!user) return null;
 
   if (error) {
     return <div className="text-red-500">Error: {error}</div>;
@@ -51,7 +63,12 @@ export default function FilesPage() {
       <ul className="list-disc pl-6">
         {files.map((file) => (
           <li key={file.id}>
-            <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+            <a
+              href={file.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
               {file.name}
             </a>
           </li>
