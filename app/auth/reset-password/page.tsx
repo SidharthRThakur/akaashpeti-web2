@@ -1,14 +1,13 @@
 // apps/web/app/auth/reset-password/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function ResetPasswordPage() {
+function ResetPasswordInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // ✅ FIXED: always a string
   const accessToken = searchParams?.get("access_token") ?? "";
 
   const [newPassword, setNewPassword] = useState("");
@@ -80,5 +79,13 @@ export default function ResetPasswordPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<p className="text-center mt-10">Loading...</p>}>
+      <ResetPasswordInner />
+    </Suspense>
   );
 }
